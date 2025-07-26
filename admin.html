@@ -25,6 +25,8 @@
     </div>
 
     <div id="adminPanel" style="display:none; margin-top:2rem;">
+      <h3>🛠️ Modifier les questions existantes</h3>
+<div id="questionEditor"></div>
       <h3>🎮 Lancer un Round</h3>
 <div id="roundsList"></div>
       <h2>Créer une question</h2>
@@ -51,6 +53,11 @@
 <div id="responsesList" style="text-align:left;"></div>
 <button onclick="refreshResponses()">🔄 Actualiser</button>
     </div>
+    <h3>📋 Corriger manuellement</h3>
+<label for="questionToCorrect">Question #</label>
+<input type="number" id="questionToCorrect" min="1" />
+<button onclick="showManualCorrection()">Afficher réponses</button>
+<div id="manualCorrectionArea"></div>
   </div>
 
   
@@ -153,6 +160,102 @@ document.addEventListener("DOMContentLoaded", updateScoreTable);
 }
 
 renderRounds();
+    function showManualCorrection() {
+  const qNum = parseInt(document.getElementById("questionToCorrect").value) - 1;
+  if (isNaN(qNum) || qNum < 0 || qNum >= questions.length) {
+    alert("Numéro de question invalide.");
+    return;
+  }
+
+  const manualZone = document.getElementById("manualCorrectionArea");
+  const responses = JSON.parse(localStorage.getItem("responses") || "[]");
+  const filtered = responses.filter(r => r.question === questions[qNum].text);
+
+  if (filtered.length === 0) {
+    manualZone.innerHTML = "<p>Aucune réponse trouvée pour cette question.</p>";
+    return;
+  }
+
+  let html = "<ul>";
+  filtered.forEach((r, i) => {
+    html += `
+      <li>
+        <strong>${r.player} :</strong> ${r.answer}
+        <button onclick="giveManualPoint('${r.player}')">Donner 1 point</button>
+      </li>
+    `;
+  });
+  html += "</ul>";
+  manualZone.innerHTML = html;
+}
+
+function giveManualPoint(player) {
+  const scores = JSON.parse(localStorage.getItem("scores") || "{}");
+  scores[player] = (scores[player] || 0) + 1;
+  localStorage.setItem("scores", JSON.stringify(scores));
+  alert(`+1 point pour ${player}`);
+                        }
+    function renderQuestionEditor() {
+  const container = document.getElementById("questionEditor");
+  container.innerHTML = "";
+
+  questions.forEach((q, index) => {
+    const wrapper = document.createElement("div");
+    wrapper.style.border = "1px solid #ccc";
+    wrapper.style.padding = "10px";
+    wrapper.style.marginBottom = "10px";
+
+    wrapper.innerHTML = `
+      <strong>Question ${index + 1}</strong><br>
+      <label>Texte :</label><br>
+      <textarea id="qText${index}" rows="2" style="width:100%;">${q.text}</textarea><br>
+
+      <label>Type :</label>
+      <select id="qType${index}">
+        <option value="qcm" ${q.type === "qcm" ? "selected" : ""}>QCM</option>
+        <option value="libre" ${q.type === "libre" ? "selected" : ""}>Réponse libre</option>
+        <option value="image" ${q.type === "image" ? "selected" : ""}>Image</option>
+      </select><br>
+
+      <label>Image URL (optionnelle) :</label><br>
+      <input type="text" id="qImage${index}" style="width:100%;" value="${q.image || ""}"><br>
+
+      <label>Options (séparées par des virgules) :</label><br>
+      <input type="text" id="qOptions${index}" style="width:100%;" value="${(q.options || []).join(",")}"><br>
+
+      <label>Bonne(s) réponse(s) (séparées par des virgules) :</label><br>
+      <input type="text" id="qAnswer${index}" style="width:100%;" value="${(q.answer || []).join(",")}"><br>
+
+      <button onclick="saveEditedQuestion(${index})">💾 Enregistrer</button>
+      <button onclick="deleteQuestion(${index})" style="color:red;">🗑 Supprimer</button>
+    `;
+
+    container.appendChild(wrapper);
+  });
+}
+
+function saveEditedQuestion(index) {
+  questions[index].text = document.getElementById(`qText${index}`).value;
+  questions[index].type = document.getElementById(`qType${index}`).value;
+  questions[index].image = document.getElementById(`qImage${index}`).value;
+  questions[index].options = document.getElementById(`qOptions${index}`).value.split(",").map(opt => opt.trim());
+  questions[index].answer = document.getElementById(`qAnswer${index}`).value.split(",").map(ans => ans.trim());
+
+  localStorage.setItem("questions", JSON.stringify(questions));
+  alert("Question mise à jour !");
+  renderQuestionEditor();
+  renderRounds(); // met à jour les boutons de round aussi
+}
+
+function deleteQuestion(index) {
+  if (confirm("Supprimer cette question ?")) {
+    questions.splice(index, 1);
+    localStorage.setItem("questions", JSON.stringify(questions));
+    alert("Question supprimée.");
+    renderQuestionEditor();
+    renderRounds();
+  }
+    }
   </script>
 </body>
 </html>
