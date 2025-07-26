@@ -21,6 +21,7 @@
   </thead>
   <tbody id="scoreBody"></tbody>
 </table> 
+      
     </div>
 
     <div id="adminPanel" style="display:none; margin-top:2rem;">
@@ -43,38 +44,14 @@
       <h3>⚔️ Contrôle de la partie :</h3>
       <button onclick="launchRound()">▶️ Lancer le round</button>
       <button onclick="resetGame()">♻️ Réinitialiser les joueurs</button>
+   
+      <h3>📨 Réponses des joueurs</h3>
+<div id="responsesList" style="text-align:left;"></div>
+<button onclick="refreshResponses()">🔄 Actualiser</button>
     </div>
   </div>
 
-  let scores = JSON.parse(localStorage.getItem("scores") || "{}");
-
-function updateScoreTable() {
-  const tbody = document.getElementById("scoreBody");
-  tbody.innerHTML = "";
-  for (const [pseudo, score] of Object.entries(scores)) {
-    const row = document.createElement("tr");
-    row.innerHTML = `
-      <td>${pseudo}</td>
-      <td>${score}</td>
-      <td><button onclick="addPoint('${pseudo}')">+1</button></td>
-      <td><button onclick="resetPlayer('${pseudo}')">❌</button></td>
-    `;
-    tbody.appendChild(row);
-  }
-  localStorage.setItem("scores", JSON.stringify(scores));
-}
-
-function addPoint(pseudo) {
-  scores[pseudo] = (scores[pseudo] || 0) + 1;
-  updateScoreTable();
-}
-
-function resetPlayer(pseudo) {
-  delete scores[pseudo];
-  updateScoreTable();
-}
-
-document.addEventListener("DOMContentLoaded", updateScoreTable);
+  
   <script>
     let isAdmin = false;
     let questions = [];
@@ -112,6 +89,52 @@ document.addEventListener("DOMContentLoaded", updateScoreTable);
     function resetGame() {
       localStorage.clear();
       alert('Tous les joueurs ont été réinitialisés.');
+    }
+    let scores = JSON.parse(localStorage.getItem("scores") || "{}");
+
+function updateScoreTable() {
+  const tbody = document.getElementById("scoreBody");
+  tbody.innerHTML = "";
+  for (const [pseudo, score] of Object.entries(scores)) {
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${pseudo}</td>
+      <td>${score}</td>
+      <td><button onclick="addPoint('${pseudo}')">+1</button></td>
+      <td><button onclick="resetPlayer('${pseudo}')">❌</button></td>
+    `;
+    tbody.appendChild(row);
+  }
+  localStorage.setItem("scores", JSON.stringify(scores));
+}
+
+function addPoint(pseudo) {
+  scores[pseudo] = (scores[pseudo] || 0) + 1;
+  updateScoreTable();
+}
+
+function resetPlayer(pseudo) {
+  delete scores[pseudo];
+  updateScoreTable();
+}
+
+document.addEventListener("DOMContentLoaded", updateScoreTable);
+  function refreshResponses() {
+  const container = document.getElementById("responsesList");
+  const responses = JSON.parse(localStorage.getItem("responses") || "[]");
+  if (responses.length === 0) {
+    container.innerHTML = "<p>Aucune réponse enregistrée.</p>";
+    return;
+  }
+
+  container.innerHTML = responses.map(r => `
+    <div style="margin-bottom:1rem; border-bottom:1px solid #ccc; padding-bottom:0.5rem;">
+      <strong>${r.player}</strong><br/>
+      <em>Q:</em> ${r.question}<br/>
+      <em>R:</em> ${r.answer}<br/>
+      <button onclick="addPoint('${r.player}')">+1 point</button>
+    </div>
+  `).join("");
     }
   </script>
 </body>
