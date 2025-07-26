@@ -2,259 +2,112 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Admin - Scroll Verse Arena</title>
-  <link href="style.css" rel="stylesheet" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Scroll Verse Arena - Admin</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #111;
+      color: white;
+      padding: 20px;
+    }
+    h1 {
+      color: gold;
+      font-size: 2em;
+      margin-bottom: 1em;
+    }
+    input, textarea, select {
+      display: block;
+      width: 100%;
+      margin-bottom: 10px;
+      padding: 10px;
+      font-size: 1em;
+      border-radius: 6px;
+    }
+    button {
+      background-color: crimson;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-right: 10px;
+    }
+    .status {
+      margin-top: 10px;
+      font-style: italic;
+      color: gold;
+    }
+  </style>
 </head>
 <body>
-  <div class="container">
-    <h1 class="title">🎮 Admin - Scroll Verse Arena</h1>
+  <h1>⚔️ Scroll Verse Arena – Panel Admin ⚔️</h1>
 
-    <div>
-      <label>Mot de passe admin :</label><br />
-      <input type="password" id="adminPass" placeholder="••••••••" />
-      <button onclick="login()">Se connecter</button>
-   <h3>🏆 Classement des joueurs</h3>
-<table id="scoreTable" border="1" style="margin: auto;">
-  <thead>
-    <tr><th>Pseudo</th><th>Score</th><th>+1</th><th>Réinitialiser</th></tr>
-  </thead>
-  <tbody id="scoreBody"></tbody>
-</table> 
-      
-    </div>
+  <label>Type de question :</label>
+  <select id="questionType" onchange="toggleFields()">
+    <option value="qcm">QCM</option>
+    <option value="qr">Question-réponse</option>
+    <option value="image">Question avec image</option>
+  </select>
 
-    <div id="adminPanel" style="display:none; margin-top:2rem;">
-      <h3>🛠️ Modifier les questions existantes</h3>
-<div id="questionEditor"></div>
-      <h3>🎮 Lancer un Round</h3>
-<div id="roundsList"></div>
-      <h2>Créer une question</h2>
-      <select id="questionType">
-        <option value="qcm">QCM</option>
-        <option value="image">QCM avec image</option>
-        <option value="libre">Réponse libre</option>
-      </select><br /><br />
+  <label>Texte de la question :</label>
+  <textarea id="questionText"></textarea>
 
-      <input type="text" id="questionText" placeholder="Texte de la question" /><br /><br />
-      <input type="text" id="options" placeholder="Options séparées par virgule (si QCM)" /><br /><br />
-      <input type="text" id="answer" placeholder="Bonne(s) réponse(s)" /><br /><br />
-      <input type="text" id="imageURL" placeholder="URL de l’image (si image)" /><br /><br />
-      <button onclick="addQuestion()">➕ Ajouter la question</button>
-
-      <h3>📋 Questions en mémoire :</h3>
-      <ul id="questionList"></ul>
-
-      <h3>⚔️ Contrôle de la partie :</h3>
-      <button onclick="launchRound()">▶️ Lancer le round</button>
-      <button onclick="resetGame()">♻️ Réinitialiser les joueurs</button>
-   
-      <h3>📨 Réponses des joueurs</h3>
-<div id="responsesList" style="text-align:left;"></div>
-<button onclick="refreshResponses()">🔄 Actualiser</button>
-    </div>
-    <h3>📋 Corriger manuellement</h3>
-<label for="questionToCorrect">Question #</label>
-<input type="number" id="questionToCorrect" min="1" />
-<button onclick="showManualCorrection()">Afficher réponses</button>
-<div id="manualCorrectionArea"></div>
+  <div id="qcmOptions">
+    <label>Options (séparées par une virgule) :</label>
+    <input type="text" id="options" placeholder="ex : Goku, Naruto, Luffy" />
   </div>
 
-  
+  <label>Bonne réponse :</label>
+  <input type="text" id="solution" placeholder="ex : Naruto" />
+
+  <div id="imageField" style="display: none;">
+    <label>URL de l'image :</label>
+    <input type="text" id="imageURL" placeholder="https://..." />
+  </div>
+
+  <button onclick="lancerQuestion()">📢 Lancer la question</button>
+  <button onclick="reset()">❌ Réinitialiser</button>
+
+  <p class="status" id="statusMsg">En attente…</p>
+
   <script>
-    let isAdmin = false;
-    let questions = [];
+    function toggleFields() {
+      const type = document.getElementById("questionType").value;
+      document.getElementById("qcmOptions").style.display = type === "qcm" ? "block" : "none";
+      document.getElementById("imageField").style.display = type === "image" ? "block" : "none";
+    }
 
-    function login() {
-      const pass = document.getElementById('adminPass').value;
-      if (pass === 'arena2024') {
-        isAdmin = true;
-        document.getElementById('adminPanel').style.display = 'block';
-        alert('Accès admin validé');
-      } else {
-        alert('Mot de passe incorrect');
+    async function lancerQuestion() {
+      const type = document.getElementById("questionType").value;
+      const text = document.getElementById("questionText").value.trim();
+      const solution = document.getElementById("solution").value.trim();
+      const options = document.getElementById("options").value.trim();
+      const imageURL = document.getElementById("imageURL").value.trim();
+
+      if (!text || (type === "qcm" && !options)) {
+        alert("Remplis tous les champs requis.");
+        return;
       }
+
+      const payload = {
+        active: true,
+        type,
+        text,
+        options: type === "qcm" ? options.split(",").map(x => x.trim()) : [],
+        solution,
+        image: type === "image" ? imageURL : null
+      };
+
+      localStorage.setItem("question", JSON.stringify(payload));
+      document.getElementById("statusMsg").textContent = "✅ Question envoyée.";
     }
 
-    function addQuestion() {
-      const type = document.getElementById('questionType').value;
-      const text = document.getElementById('questionText').value;
-      const options = document.getElementById('options').value.split(',');
-      const answer = document.getElementById('answer').value.split(',');
-      const image = document.getElementById('imageURL').value;
-
-      const q = { type, text, options, answer, image };
-      questions.push(q);
-
-      const li = document.createElement('li');
-      li.innerText = `${type.toUpperCase()} : ${text}`;
-      document.getElementById('questionList').appendChild(li);
-    }
-
-    function launchRound() {
-      alert('Round lancé ! Les joueurs verront la prochaine question.');
-    }
-
-    function resetGame() {
-      localStorage.clear();
-      alert('Tous les joueurs ont été réinitialisés.');
-    }
-    let scores = JSON.parse(localStorage.getItem("scores") || "{}");
-
-function updateScoreTable() {
-  const tbody = document.getElementById("scoreBody");
-  tbody.innerHTML = "";
-  for (const [pseudo, score] of Object.entries(scores)) {
-    const row = document.createElement("tr");
-    row.innerHTML = `
-      <td>${pseudo}</td>
-      <td>${score}</td>
-      <td><button onclick="addPoint('${pseudo}')">+1</button></td>
-      <td><button onclick="resetPlayer('${pseudo}')">❌</button></td>
-    `;
-    tbody.appendChild(row);
-  }
-  localStorage.setItem("scores", JSON.stringify(scores));
-}
-
-function addPoint(pseudo) {
-  scores[pseudo] = (scores[pseudo] || 0) + 1;
-  updateScoreTable();
-}
-
-function resetPlayer(pseudo) {
-  delete scores[pseudo];
-  updateScoreTable();
-}
-
-document.addEventListener("DOMContentLoaded", updateScoreTable);
-  function refreshResponses() {
-  const container = document.getElementById("responsesList");
-  const responses = JSON.parse(localStorage.getItem("responses") || "[]");
-  if (responses.length === 0) {
-    container.innerHTML = "<p>Aucune réponse enregistrée.</p>";
-    return;
-  }
-
-  container.innerHTML = responses.map(r => `
-    <div style="margin-bottom:1rem; border-bottom:1px solid #ccc; padding-bottom:0.5rem;">
-      <strong>${r.player}</strong><br/>
-      <em>Q:</em> ${r.question}<br/>
-      <em>R:</em> ${r.answer}<br/>
-      <button onclick="addPoint('${r.player}')">+1 point</button>
-    </div>
-  `).join("");
-    }
-    function renderRounds() {
-  const container = document.getElementById("roundsList");
-  container.innerHTML = "";
-  for (let i = 0; i <  questions.length; i++) {
-    const btn = document.createElement("button");
-    btn.innerText = `Round ${i + 1}`;
-    btn.onclick = () => {
-      localStorage.setItem("startRound", i);
-      alert(`Round ${i + 1} lancé !`);
-    };
-    container.appendChild(btn);
-  }
-}
-
-renderRounds();
-    function showManualCorrection() {
-  const qNum = parseInt(document.getElementById("questionToCorrect").value) - 1;
-  if (isNaN(qNum) || qNum < 0 || qNum >= questions.length) {
-    alert("Numéro de question invalide.");
-    return;
-  }
-
-  const manualZone = document.getElementById("manualCorrectionArea");
-  const responses = JSON.parse(localStorage.getItem("responses") || "[]");
-  const filtered = responses.filter(r => r.question === questions[qNum].text);
-
-  if (filtered.length === 0) {
-    manualZone.innerHTML = "<p>Aucune réponse trouvée pour cette question.</p>";
-    return;
-  }
-
-  let html = "<ul>";
-  filtered.forEach((r, i) => {
-    html += `
-      <li>
-        <strong>${r.player} :</strong> ${r.answer}
-        <button onclick="giveManualPoint('${r.player}')">Donner 1 point</button>
-      </li>
-    `;
-  });
-  html += "</ul>";
-  manualZone.innerHTML = html;
-}
-
-function giveManualPoint(player) {
-  const scores = JSON.parse(localStorage.getItem("scores") || "{}");
-  scores[player] = (scores[player] || 0) + 1;
-  localStorage.setItem("scores", JSON.stringify(scores));
-  alert(`+1 point pour ${player}`);
-                        }
-    function renderQuestionEditor() {
-  const container = document.getElementById("questionEditor");
-  container.innerHTML = "";
-
-  questions.forEach((q, index) => {
-    const wrapper = document.createElement("div");
-    wrapper.style.border = "1px solid #ccc";
-    wrapper.style.padding = "10px";
-    wrapper.style.marginBottom = "10px";
-
-    wrapper.innerHTML = `
-      <strong>Question ${index + 1}</strong><br>
-      <label>Texte :</label><br>
-      <textarea id="qText${index}" rows="2" style="width:100%;">${q.text}</textarea><br>
-
-      <label>Type :</label>
-      <select id="qType${index}">
-        <option value="qcm" ${q.type === "qcm" ? "selected" : ""}>QCM</option>
-        <option value="libre" ${q.type === "libre" ? "selected" : ""}>Réponse libre</option>
-        <option value="image" ${q.type === "image" ? "selected" : ""}>Image</option>
-      </select><br>
-
-      <label>Image URL (optionnelle) :</label><br>
-      <input type="text" id="qImage${index}" style="width:100%;" value="${q.image || ""}"><br>
-
-      <label>Options (séparées par des virgules) :</label><br>
-      <input type="text" id="qOptions${index}" style="width:100%;" value="${(q.options || []).join(",")}"><br>
-
-      <label>Bonne(s) réponse(s) (séparées par des virgules) :</label><br>
-      <input type="text" id="qAnswer${index}" style="width:100%;" value="${(q.answer || []).join(",")}"><br>
-
-      <button onclick="saveEditedQuestion(${index})">💾 Enregistrer</button>
-      <button onclick="deleteQuestion(${index})" style="color:red;">🗑 Supprimer</button>
-    `;
-
-    container.appendChild(wrapper);
-  });
-}
-
-function saveEditedQuestion(index) {
-  questions[index].text = document.getElementById(`qText${index}`).value;
-  questions[index].type = document.getElementById(`qType${index}`).value;
-  questions[index].image = document.getElementById(`qImage${index}`).value;
-  questions[index].options = document.getElementById(`qOptions${index}`).value.split(",").map(opt => opt.trim());
-  questions[index].answer = document.getElementById(`qAnswer${index}`).value.split(",").map(ans => ans.trim());
-
-  localStorage.setItem("questions", JSON.stringify(questions));
-  alert("Question mise à jour !");
-  renderQuestionEditor();
-  renderRounds(); // met à jour les boutons de round aussi
-}
-
-function deleteQuestion(index) {
-  if (confirm("Supprimer cette question ?")) {
-    questions.splice(index, 1);
-    localStorage.setItem("questions", JSON.stringify(questions));
-    alert("Question supprimée.");
-    renderQuestionEditor();
-    renderRounds();
-  }
+    function reset() {
+      localStorage.removeItem("question");
+      document.getElementById("statusMsg").textContent = "❌ Question effacée.";
     }
   </script>
 </body>
