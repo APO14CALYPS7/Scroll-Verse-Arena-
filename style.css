@@ -1,0 +1,36 @@
+body {
+  margin: 0;
+  padding: 0;
+  font-family: sans-serif;
+  background: white;
+  color: black;
+}
+.container {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+}
+.title {
+  font-family: 'UnifrakturCook', cursive;
+  font-size: 42px;
+  color: #b91c1c;
+}
+.intro {
+  margin: 1rem 0;
+  font-size: 1.1rem;
+}
+input {
+  padding: 0.5rem;
+  font-size: 1rem;
+  margin-bottom: 1rem;
+  width: 100%;
+}
+button {
+  padding: 0.7rem 1.5rem;
+  background-color: gold;
+  color: black;
+  font-weight: bold;
+  border: none;
+  cursor: pointer;
+}
