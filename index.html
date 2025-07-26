@@ -55,28 +55,40 @@ function startGame() {
     return;
   }
   localStorage.setItem("player", pseudo);
-  showQuestion();
+
+  // Commence à écouter les rounds
+  waitForRound();
 }
 
-function showQuestion() {
-  const q = questions[currentQuestionIndex];
+function waitForRound() {
   document.querySelector(".intro").style.display = "none";
   document.getElementById("gameArea").style.display = "block";
-  document.getElementById("questionText").innerText = q.text;
+  document.getElementById("gameArea").innerHTML = `<p>En attente du prochain round...</p>`;
 
+  setInterval(() => {
+    const round = localStorage.getItem("startRound");
+    if (round !== null && round !== "shown") {
+      showQuestion(parseInt(round));
+      localStorage.setItem("startRound", "shown");
+    }
+  }, 1000);
+}
+
+function showQuestion(index) {
+  const q = questions[index];
   const image = document.getElementById("questionImage");
-  if (q.image) {
-    image.src = q.image;
-    image.style.display = "block";
-  } else {
-    image.style.display = "none";
-  }
-
   const optionsArea = document.getElementById("optionsArea");
-  optionsArea.innerHTML = "";
+
+  document.getElementById("gameArea").innerHTML = `
+    <p id="questionText">${q.text}</p>
+    <img id="questionImage" src="${q.image || ""}" style="max-width: 100%; ${q.image ? "display:block;" : "display:none;"} margin-bottom: 1rem;" />
+    <div id="optionsArea"></div>
+    <input type="text" id="playerAnswer" placeholder="Ta réponse ici" ${q.type === "libre" ? "style='display:block;'" : "style='display:none;'"}>
+    <button id="submitBtn" ${q.type === "libre" ? "style='display:inline-block;'" : "style='display:none;'"} onclick="submitAnswer()">Envoyer la réponse</button>
+  `;
 
   if (q.type === "qcm" || q.type === "image") {
-    document.getElementById("playerAnswer").style.display = "none";
+    const area = document.getElementById("optionsArea");
     q.options.forEach(opt => {
       const btn = document.createElement("button");
       btn.innerText = opt;
@@ -84,15 +96,11 @@ function showQuestion() {
         document.getElementById("playerAnswer").value = opt;
         submitAnswer();
       };
-      optionsArea.appendChild(btn);
+      area.appendChild(btn);
     });
-    document.getElementById("submitBtn").style.display = "none";
-  } else {
-    document.getElementById("playerAnswer").style.display = "block";
-    document.getElementById("submitBtn").style.display = "inline-block";
   }
-}
-
+    }
+    
 function submitAnswer() {
   const answer = document.getElementById("playerAnswer").value;
   if (!answer) {
