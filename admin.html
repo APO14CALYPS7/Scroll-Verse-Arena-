@@ -14,6 +14,13 @@
       <label>Mot de passe admin :</label><br />
       <input type="password" id="adminPass" placeholder="••••••••" />
       <button onclick="login()">Se connecter</button>
+   <h3>🏆 Classement des joueurs</h3>
+<table id="scoreTable" border="1" style="margin: auto;">
+  <thead>
+    <tr><th>Pseudo</th><th>Score</th><th>+1</th><th>Réinitialiser</th></tr>
+  </thead>
+  <tbody id="scoreBody"></tbody>
+</table> 
     </div>
 
     <div id="adminPanel" style="display:none; margin-top:2rem;">
@@ -38,7 +45,35 @@
       <button onclick="resetGame()">♻️ Réinitialiser les joueurs</button>
     </div>
   </div>
+let scores = JSON.parse(localStorage.getItem("scores") || "{}");
 
+function updateScoreTable() {
+  const tbody = document.getElementById("scoreBody");
+  tbody.innerHTML = "";
+  for (const [pseudo, score] of Object.entries(scores)) {
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${pseudo}</td>
+      <td>${score}</td>
+      <td><button onclick="addPoint('${pseudo}')">+1</button></td>
+      <td><button onclick="resetPlayer('${pseudo}')">❌</button></td>
+    `;
+    tbody.appendChild(row);
+  }
+  localStorage.setItem("scores", JSON.stringify(scores));
+}
+
+function addPoint(pseudo) {
+  scores[pseudo] = (scores[pseudo] || 0) + 1;
+  updateScoreTable();
+}
+
+function resetPlayer(pseudo) {
+  delete scores[pseudo];
+  updateScoreTable();
+}
+
+document.addEventListener("DOMContentLoaded", updateScoreTable);
   <script>
     let isAdmin = false;
     let questions = [];
