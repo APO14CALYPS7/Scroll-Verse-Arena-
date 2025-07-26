@@ -13,8 +13,57 @@
     <p class="intro">Bienvenue dans le Scroll Verse Arena. Seuls les vrais connaisseurs des webtoons survivront aux épreuves.</p>
     <input type="text" id="pseudo" placeholder="Entre ton pseudo" />
     <button onclick="startGame()">Commencer</button>
-    <div id="gameArea" style="display:none;"></div>
-  </div>
-  <script src="script.js"></script>
+    <div id="gameArea" style="display:none;">
+  <p id="questionText"></p>
+  <input type="text" id="playerAnswer" placeholder="Ta réponse ici" />
+  <button onclick="submitAnswer()">Envoyer la réponse</button>
+    </div>
+  <script const questions = [
+  {
+    id: 1,
+    type: "libre",
+    text: "Quel est le vrai nom de Solo Leveling ?"
+  }
+  // Tu pourras ajouter d'autres questions ici
+];
+
+let currentQuestionIndex = 0;
+let pseudo = "";
+
+function startGame() {
+  pseudo = document.getElementById("pseudo").value;
+  if (!pseudo) {
+    alert("Merci de saisir un pseudo !");
+    return;
+  }
+  localStorage.setItem("player", pseudo);
+  showQuestion();
+}
+
+function showQuestion() {
+  const q = questions[currentQuestionIndex];
+  document.querySelector(".intro").style.display = "none";
+  document.getElementById("pseudo").style.display = "none";
+  document.querySelector("button").style.display = "none";
+  document.getElementById("gameArea").style.display = "block";
+  document.getElementById("questionText").innerText = q.text;
+}
+
+function submitAnswer() {
+  const answer = document.getElementById("playerAnswer").value;
+  if (!answer) {
+    alert("Réponds avant d’envoyer !");
+    return;
+  }
+  const q = questions[currentQuestionIndex];
+  const responses = JSON.parse(localStorage.getItem("responses") || "[]");
+  responses.push({
+    player: pseudo,
+    question: q.text,
+    answer: answer
+  });
+  localStorage.setItem("responses", JSON.stringify(responses));
+  document.getElementById("gameArea").innerHTML = `<p>Réponse envoyée ! Merci ${pseudo}.</p>`;
+}   src="script.js"></script> 
 </body>
 </html> 
