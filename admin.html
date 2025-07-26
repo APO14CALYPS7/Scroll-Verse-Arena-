@@ -25,6 +25,8 @@
     </div>
 
     <div id="adminPanel" style="display:none; margin-top:2rem;">
+      <h3>🎮 Lancer un Round</h3>
+<div id="roundsList"></div>
       <h2>Créer une question</h2>
       <select id="questionType">
         <option value="qcm">QCM</option>
@@ -136,6 +138,21 @@ document.addEventListener("DOMContentLoaded", updateScoreTable);
     </div>
   `).join("");
     }
+    function renderRounds() {
+  const container = document.getElementById("roundsList");
+  container.innerHTML = "";
+  for (let i = 0; i <  questions.length; i++) {
+    const btn = document.createElement("button");
+    btn.innerText = `Round ${i + 1}`;
+    btn.onclick = () => {
+      localStorage.setItem("startRound", i);
+      alert(`Round ${i + 1} lancé !`);
+    };
+    container.appendChild(btn);
+  }
+}
+
+renderRounds();
   </script>
 </body>
 </html>
