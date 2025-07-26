@@ -1,128 +1,163 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Scroll Verse Arena</title>
-  <link href="style.css" rel="stylesheet" />
-  <link href="https://fonts.googleapis.com/css2?family=UnifrakturCook&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #ffffff;
+      color: #111;
+      padding: 20px;
+      text-align: center;
+    }
+    h1 {
+      font-size: 2em;
+      color: #cc0000;
+      font-weight: bold;
+      margin-bottom: 1em;
+      text-shadow: 1px 1px 0 #000;
+    }
+    button {
+      background-color: #cc0000;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      font-size: 1em;
+      border-radius: 8px;
+      margin-top: 10px;
+    }
+    .option-button {
+      display: block;
+      margin: 10px auto;
+      width: 90%;
+    }
+    .hidden {
+      display: none;
+    }
+    img {
+      max-width: 100%;
+      height: auto;
+    }
+  </style>
 </head>
 <body>
-  <div class="container">
-    <h1 class="title">Scroll Verse Arena</h1>
-    <p class="intro">Bienvenue dans le Scroll Verse Arena. Seuls les vrais connaisseurs des webtoons survivront aux épreuves.</p>
-    <input type="text" id="pseudo" placeholder="Entre ton pseudo" />
-    <button onclick="startGame()">Commencer</button>
-    <div id="gameArea" style="display:none;">
-  <p id="questionText"></p>
-  <img id="questionImage" src="" style="max-width: 100%; display: none; margin-bottom: 1rem;" />
-  <div id="optionsArea"></div>
-  <input type="text" id="playerAnswer" placeholder="Ta réponse ici" style="display: none;" />
-  <button id="submitBtn" onclick="submitAnswer()">Envoyer la réponse</button>
-    </div>
+  <h1>🔥 Scroll Verse Arena 🔥</h1>
+  <div id="intro">
+    <input type="text" id="playerName" placeholder="Ton pseudo" />
+    <button onclick="registerPlayer()">Rejoindre</button>
+  </div>
+
+  <div id="game" class="hidden">
+    <p id="questionText"></p>
+    <img id="questionImage" class="hidden" />
+    <div id="options"></div>
+    <input type="text" id="freeAnswer" class="hidden" placeholder="Ta réponse" />
+    <button onclick="submitAnswer()">Valider</button>
+    <p id="feedback" class="hidden"></p>
+  </div>
+
   <script>
-const questions = [
-  {
-    id: 1,
-    type: "qcm",
-    text: "Qui est le héros de Solo Leveling ?",
-    options: ["Jin-Woo", "Bam", "Mori Jin", "Jin Mori"],
-    answer: ["Jin-Woo"]
-  },
-  {
-    id: 2,
-    type: "image",
-    text: "De quel manhwa vient ce personnage ?",
-    image: "https://upload.wikimedia.org/wikipedia/en/7/79/Rai_Noblesse.jpg",
-    options: ["Solo Leveling", "Noblesse", "UnOrdinary"],
-    answer: ["Noblesse"]
-  },
-  {
-    id: 3,
-    type: "libre",
-    text: "Quel est ton webtoon préféré ?",
-    answer: []
-  }
-];
+    let currentQuestion = null;
 
-let currentQuestionIndex = 0;
-let pseudo = "";
-
-function startGame() {
-  pseudo = document.getElementById("pseudo").value;
-  if (!pseudo) {
-    alert("Merci d’entrer un pseudo !");
-    return;
-  }
-  localStorage.setItem("player", pseudo);
-
-  // Commence à écouter les rounds
-  waitForRound();
-}
-
-function waitForRound() {
-  document.querySelector(".intro").style.display = "none";
-  document.getElementById("gameArea").style.display = "block";
-  document.getElementById("gameArea").innerHTML = `<p>En attente du prochain round...</p>`;
-
-  setInterval(() => {
-    const round = localStorage.getItem("startRound");
-    if (round !== null && round !== "shown") {
-      showQuestion(parseInt(round));
-      localStorage.setItem("startRound", "shown");
+    function registerPlayer() {
+      const name = document.getElementById('playerName').value.trim();
+      if (!name) return alert("Entre ton pseudo !");
+      localStorage.setItem('player', name);
+      document.getElementById('intro').classList.add('hidden');
+      document.getElementById('game').classList.remove('hidden');
     }
-  }, 1000);
-}
 
-function showQuestion(index) {
-  const q = questions[index];
-  const image = document.getElementById("questionImage");
-  const optionsArea = document.getElementById("optionsArea");
+    async function fetchQuestion() {
+      const res = await fetch('question.json');
+      const data = await res.json();
+      if (data && data.active) {
+        currentQuestion = data;
+        showQuestion(data);
+      } else {
+        document.getElementById('questionText').textContent = "En attente de la prochaine question...";
+        setTimeout(fetchQuestion, 2000);
+      }
+    }
 
-  document.getElementById("gameArea").innerHTML = `
-    <p id="questionText">${q.text}</p>
-    <img id="questionImage" src="${q.image || ""}" style="max-width: 100%; ${q.image ? "display:block;" : "display:none;"} margin-bottom: 1rem;" />
-    <div id="optionsArea"></div>
-    <input type="text" id="playerAnswer" placeholder="Ta réponse ici" ${q.type === "libre" ? "style='display:block;'" : "style='display:none;'"}>
-    <button id="submitBtn" ${q.type === "libre" ? "style='display:inline-block;'" : "style='display:none;'"} onclick="submitAnswer()">Envoyer la réponse</button>
-  `;
+    function showQuestion(q) {
+      document.getElementById('questionText').textContent = q.text;
+      const optionsDiv = document.getElementById('options');
+      const input = document.getElementById('freeAnswer');
+      const image = document.getElementById('questionImage');
+      const feedback = document.getElementById('feedback');
 
-  if (q.type === "qcm" || q.type === "image") {
-    const area = document.getElementById("optionsArea");
-    q.options.forEach(opt => {
-      const btn = document.createElement("button");
-      btn.innerText = opt;
-      btn.onclick = () => {
-        document.getElementById("playerAnswer").value = opt;
-        submitAnswer();
-      };
-      area.appendChild(btn);
+      optionsDiv.innerHTML = '';
+      input.classList.add('hidden');
+      image.classList.add('hidden');
+      feedback.classList.add('hidden');
+
+      if (q.image) {
+        image.src = q.image;
+        image.classList.remove('hidden');
+      }
+
+      if (q.type === 'qcm') {
+        q.options.forEach(opt => {
+          const btn = document.createElement('button');
+          btn.textContent = opt;
+          btn.className = "option-button";
+          btn.onclick = () => {
+            input.value = opt;
+            submitAnswer();
+          };
+          optionsDiv.appendChild(btn);
+        });
+      } else {
+        input.classList.remove('hidden');
+      }
+    }
+
+    function submitAnswer() {
+      const player = localStorage.getItem('player');
+      const answer = document.getElementById('freeAnswer').value || '';
+      const feedback = document.getElementById('feedback');
+      if (!player || !currentQuestion) return;
+
+      const responses = JSON.parse(localStorage.getItem('responses') || '[]');
+      responses.push({
+        player,
+        answer,
+        question: currentQuestion.text,
+        timestamp: new Date().toISOString()
+      });
+      localStorage.setItem('responses', JSON.stringify(responses));
+
+      feedback.classList.remove('hidden');
+      if (currentQuestion.solution) {
+        feedback.innerHTML = `✅ Réponse envoyée.<br/>La bonne réponse était : <strong>${currentQuestion.solution}</strong>`;
+      } else {
+        feedback.innerHTML = `✅ Réponse envoyée.`;
+      }
+
+      // Empêche la triche
+      setTimeout(() => {
+        document.getElementById('questionText').textContent = "Merci d’avoir répondu !";
+        document.getElementById('options').innerHTML = '';
+        document.getElementById('freeAnswer').classList.add('hidden');
+      }, 1000);
+    }
+
+    // Détection sortie du jeu
+    window.addEventListener("blur", () => {
+      alert("Tu as quitté le jeu ! Tu ne peux plus revenir à cette partie.");
+      localStorage.removeItem('player');
+      location.reload();
     });
-  }
+
+    if (localStorage.getItem('player')) {
+      document.getElementById('intro').classList.add('hidden');
+      document.getElementById('game').classList.remove('hidden');
     }
-    
-function submitAnswer() {
-  const answer = document.getElementById("playerAnswer").value;
-  if (!answer) {
-    alert("Tu dois répondre !");
-    return;
-  }
 
-  const q = questions[currentQuestionIndex];
-  const responses = JSON.parse(localStorage.getItem("responses") || "[]");
-  responses.push({
-    player: pseudo,
-    question: q.text,
-    answer: answer
-  });
-  localStorage.setItem("responses", JSON.stringify(responses));
-
-  document.getElementById("gameArea").innerHTML = `
-    <p>Merci ${pseudo} !<br />
-    Ta réponse a été enregistrée.<br />
-    <strong>Bonne réponse :</strong> ${q.answer.join(", ")}</p>
-  `;
-}
-      </script> 
+    setInterval(fetchQuestion, 1500);
+  </script>
 </body>
-</html> 
+  </html>
