@@ -45,7 +45,8 @@
       <button onclick="resetGame()">♻️ Réinitialiser les joueurs</button>
     </div>
   </div>
-let scores = JSON.parse(localStorage.getItem("scores") || "{}");
+
+  let scores = JSON.parse(localStorage.getItem("scores") || "{}");
 
 function updateScoreTable() {
   const tbody = document.getElementById("scoreBody");
