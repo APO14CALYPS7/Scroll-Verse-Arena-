@@ -15,16 +15,34 @@
     <button onclick="startGame()">Commencer</button>
     <div id="gameArea" style="display:none;">
   <p id="questionText"></p>
-  <input type="text" id="playerAnswer" placeholder="Ta réponse ici" />
-  <button onclick="submitAnswer()">Envoyer la réponse</button>
+  <img id="questionImage" src="" style="max-width: 100%; display: none; margin-bottom: 1rem;" />
+  <div id="optionsArea"></div>
+  <input type="text" id="playerAnswer" placeholder="Ta réponse ici" style="display: none;" />
+  <button id="submitBtn" onclick="submitAnswer()">Envoyer la réponse</button>
     </div>
-  <script const questions = [
+  <script>
+const questions = [
   {
     id: 1,
+    type: "qcm",
+    text: "Qui est le héros de Solo Leveling ?",
+    options: ["Jin-Woo", "Bam", "Mori Jin", "Jin Mori"],
+    answer: ["Jin-Woo"]
+  },
+  {
+    id: 2,
+    type: "image",
+    text: "De quel manhwa vient ce personnage ?",
+    image: "https://upload.wikimedia.org/wikipedia/en/7/79/Rai_Noblesse.jpg",
+    options: ["Solo Leveling", "Noblesse", "UnOrdinary"],
+    answer: ["Noblesse"]
+  },
+  {
+    id: 3,
     type: "libre",
-    text: "Quel est le vrai nom de Solo Leveling ?"
+    text: "Quel est ton webtoon préféré ?",
+    answer: []
   }
-  // Tu pourras ajouter d'autres questions ici
 ];
 
 let currentQuestionIndex = 0;
@@ -33,7 +51,7 @@ let pseudo = "";
 function startGame() {
   pseudo = document.getElementById("pseudo").value;
   if (!pseudo) {
-    alert("Merci de saisir un pseudo !");
+    alert("Merci d’entrer un pseudo !");
     return;
   }
   localStorage.setItem("player", pseudo);
@@ -43,18 +61,45 @@ function startGame() {
 function showQuestion() {
   const q = questions[currentQuestionIndex];
   document.querySelector(".intro").style.display = "none";
-  document.getElementById("pseudo").style.display = "none";
-  document.querySelector("button").style.display = "none";
   document.getElementById("gameArea").style.display = "block";
   document.getElementById("questionText").innerText = q.text;
+
+  const image = document.getElementById("questionImage");
+  if (q.image) {
+    image.src = q.image;
+    image.style.display = "block";
+  } else {
+    image.style.display = "none";
+  }
+
+  const optionsArea = document.getElementById("optionsArea");
+  optionsArea.innerHTML = "";
+
+  if (q.type === "qcm" || q.type === "image") {
+    document.getElementById("playerAnswer").style.display = "none";
+    q.options.forEach(opt => {
+      const btn = document.createElement("button");
+      btn.innerText = opt;
+      btn.onclick = () => {
+        document.getElementById("playerAnswer").value = opt;
+        submitAnswer();
+      };
+      optionsArea.appendChild(btn);
+    });
+    document.getElementById("submitBtn").style.display = "none";
+  } else {
+    document.getElementById("playerAnswer").style.display = "block";
+    document.getElementById("submitBtn").style.display = "inline-block";
+  }
 }
 
 function submitAnswer() {
   const answer = document.getElementById("playerAnswer").value;
   if (!answer) {
-    alert("Réponds avant d’envoyer !");
+    alert("Tu dois répondre !");
     return;
   }
+
   const q = questions[currentQuestionIndex];
   const responses = JSON.parse(localStorage.getItem("responses") || "[]");
   responses.push({
@@ -63,7 +108,13 @@ function submitAnswer() {
     answer: answer
   });
   localStorage.setItem("responses", JSON.stringify(responses));
-  document.getElementById("gameArea").innerHTML = `<p>Réponse envoyée ! Merci ${pseudo}.</p>`;
-}   src="script.js"></script> 
+
+  document.getElementById("gameArea").innerHTML = `
+    <p>Merci ${pseudo} !<br />
+    Ta réponse a été enregistrée.<br />
+    <strong>Bonne réponse :</strong> ${q.answer.join(", ")}</p>
+  `;
+}
+      </script> 
 </body>
 </html> 
