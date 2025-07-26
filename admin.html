@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin - Scroll Verse Arena</title>
+  <link href="style.css" rel="stylesheet" />
+</head>
+<body>
+  <div class="container">
+    <h1 class="title">🎮 Admin - Scroll Verse Arena</h1>
+
+    <div>
+      <label>Mot de passe admin :</label><br />
+      <input type="password" id="adminPass" placeholder="••••••••" />
+      <button onclick="login()">Se connecter</button>
+    </div>
+
+    <div id="adminPanel" style="display:none; margin-top:2rem;">
+      <h2>Créer une question</h2>
+      <select id="questionType">
+        <option value="qcm">QCM</option>
+        <option value="image">QCM avec image</option>
+        <option value="libre">Réponse libre</option>
+      </select><br /><br />
+
+      <input type="text" id="questionText" placeholder="Texte de la question" /><br /><br />
+      <input type="text" id="options" placeholder="Options séparées par virgule (si QCM)" /><br /><br />
+      <input type="text" id="answer" placeholder="Bonne(s) réponse(s)" /><br /><br />
+      <input type="text" id="imageURL" placeholder="URL de l’image (si image)" /><br /><br />
+      <button onclick="addQuestion()">➕ Ajouter la question</button>
+
+      <h3>📋 Questions en mémoire :</h3>
+      <ul id="questionList"></ul>
+
+      <h3>⚔️ Contrôle de la partie :</h3>
+      <button onclick="launchRound()">▶️ Lancer le round</button>
+      <button onclick="resetGame()">♻️ Réinitialiser les joueurs</button>
+    </div>
+  </div>
+
+  <script>
+    let isAdmin = false;
+    let questions = [];
+
+    function login() {
+      const pass = document.getElementById('adminPass').value;
+      if (pass === 'arena2024') {
+        isAdmin = true;
+        document.getElementById('adminPanel').style.display = 'block';
+        alert('Accès admin validé');
+      } else {
+        alert('Mot de passe incorrect');
+      }
+    }
+
+    function addQuestion() {
+      const type = document.getElementById('questionType').value;
+      const text = document.getElementById('questionText').value;
+      const options = document.getElementById('options').value.split(',');
+      const answer = document.getElementById('answer').value.split(',');
+      const image = document.getElementById('imageURL').value;
+
+      const q = { type, text, options, answer, image };
+      questions.push(q);
+
+      const li = document.createElement('li');
+      li.innerText = `${type.toUpperCase()} : ${text}`;
+      document.getElementById('questionList').appendChild(li);
+    }
+
+    function launchRound() {
+      alert('Round lancé ! Les joueurs verront la prochaine question.');
+    }
+
+    function resetGame() {
+      localStorage.clear();
+      alert('Tous les joueurs ont été réinitialisés.');
+    }
+  </script>
+</body>
+</html>
